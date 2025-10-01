@@ -1,107 +1,102 @@
 import streamlit as st
 import random
 
-st.set_page_config(page_title="健康餐助手", layout="wide")
-st.title("🥗 健康餐助手 - 个性化一周计划 + 购物清单")
+st.set_page_config(page_title="健康餐助手", layout="centered")
+st.title("🥗 健康餐助手 - 性别+目标自适应菜单")
 
 # 用户输入
 height = st.number_input("身高 (cm)", 100, 250, 170)
 weight = st.number_input("体重 (kg)", 30, 200, 65)
+gender = st.selectbox("你的性别", ["男", "女"])
 goal = st.selectbox("你的目标", ["减脂", "保持", "增肌"])
 
 age = 25
-gender = "男"
 
 # 基础代谢率 (BMR)
-if gender == "男":
-    bmr = 10 * weight + 6.25 * height - 5 * age + 5
-else:
-    bmr = 10 * weight + 6.25 * height - 5 * age - 161
+bmr = 10 * weight + 6.25 * height - 5 * age + (5 if gender=="男" else -161)
 
-# 总热量按目标调整
-if goal == "减脂":
-    calories_per_day = int(bmr * 1.2)
-elif goal == "保持":
-    calories_per_day = int(bmr * 1.4)
-else:
-    calories_per_day = int(bmr * 1.6)
+# 目标系数
+factor = 1.2 if goal=="减脂" else 1.4 if goal=="保持" else 1.6
+calories_per_day = int(bmr * factor * (1.05 if gender=="男" else 0.95))
 
-# 每日营养需求
-protein_g = int(weight * 1.8)  # 蛋白质
-fat_ratio = 0.25
-carb_ratio = 0.5
-fat_g = int(calories_per_day * fat_ratio / 9)
-carb_g = int(calories_per_day * carb_ratio / 4)
+# 蛋白质、碳水、脂肪目标
+protein_g = int(weight * (1.8 if gender=="男" else 1.6))
+fat_g = int(calories_per_day*0.25/9)
+carb_g = int(calories_per_day*0.5/4)
 
-st.subheader("📊 每日营养目标")
-st.write(f"- 热量：{calories_per_day} kcal")
-st.write(f"- 蛋白质：{protein_g} g")
-st.write(f"- 碳水化合物：{carb_g} g")
-st.write(f"- 脂肪：{fat_g} g")
+st.markdown(f"**每日营养目标**: 热量 {calories_per_day} kcal | 蛋白质 {protein_g} g | 碳水 {carb_g} g | 脂肪 {fat_g} g")
 
-# 食物库与营养信息 (每100g热量 kcal / 蛋白质 g / 碳水 g / 脂肪 g)
+# 食物库（每100g含量示例）
 food_db = {
-    "鸡胸肉": {"cal": 165, "p": 31, "c": 0, "f": 3.6},
-    "牛肉": {"cal": 250, "p": 26, "c": 0, "f": 15},
-    "三文鱼": {"cal": 208, "p": 20, "c": 0, "f": 13},
-    "火鸡胸肉": {"cal": 135, "p": 29, "c": 0, "f": 1},
-    "鸡蛋": {"cal": 155, "p": 13, "c": 1, "f": 11},
-    "燕麦片": {"cal": 389, "p": 17, "c": 66, "f": 7},
-    "糙米": {"cal": 111, "p": 2.6, "c": 23, "f": 0.9},
-    "红薯": {"cal": 86, "p": 1.6, "c": 20, "f": 0.1},
-    "西兰花": {"cal": 34, "p": 2.8, "c": 7, "f": 0.4},
-    "菠菜": {"cal": 23, "p": 2.9, "c": 3.6, "f": 0.4},
-    "芦笋": {"cal": 20, "p": 2.2, "c": 3.9, "f": 0.1},
-    "四季豆": {"cal": 31, "p": 1.8, "c": 7, "f": 0.1},
-    "玉米": {"cal": 86, "p": 3.2, "c": 19, "f": 1.2},
-    "全麦面包": {"cal": 247, "p": 13, "c": 41, "f": 4},
-    "坚果": {"cal": 607, "p": 20, "c": 21, "f": 54},
-    "酸奶": {"cal": 59, "p": 10, "c": 3.6, "f": 0.4},
-    "香蕉": {"cal": 89, "p": 1.1, "c": 23, "f": 0.3},
-    "豆腐": {"cal": 76, "p": 8, "c": 1.9, "f": 4.8},
+    "鸡胸肉": {"cal":165,"protein":31,"carb":0,"fat":3.6},
+    "牛肉": {"cal":250,"protein":26,"carb":0,"fat":15},
+    "三文鱼": {"cal":208,"protein":20,"carb":0,"fat":13},
+    "火鸡胸肉": {"cal":135,"protein":30,"carb":0,"fat":1},
+    "鸡蛋": {"cal":155,"protein":13,"carb":1,"fat":11},
+    "燕麦片": {"cal":389,"protein":17,"carb":66,"fat":7},
+    "糙米": {"cal":111,"protein":2.6,"carb":23,"fat":0.9},
+    "红薯": {"cal":86,"protein":1.6,"carb":20,"fat":0.1},
+    "西兰花": {"cal":55,"protein":3.7,"carb":11,"fat":0.6},
+    "菠菜": {"cal":23,"protein":2.9,"carb":3.6,"fat":0.4},
+    "芦笋": {"cal":20,"protein":2.2,"carb":3.9,"fat":0.1},
+    "四季豆": {"cal":31,"protein":1.8,"carb":7,"fat":0.1},
+    "玉米": {"cal":86,"protein":3.2,"carb":19,"fat":1.2},
+    "全麦面包": {"cal":247,"protein":13,"carb":41,"fat":4.2},
+    "坚果": {"cal":607,"protein":20,"carb":21,"fat":54},
+    "酸奶": {"cal":59,"protein":10,"carb":3.6,"fat":0.4},
+    "香蕉": {"cal":89,"protein":1.1,"carb":23,"fat":0.3},
+    "豆腐": {"cal":76,"protein":8,"carb":1.9,"fat":4.8}
 }
 
-# 简单食物分类
-breakfast_options = [["燕麦片", "牛奶", "鸡蛋"], ["全麦面包", "鸡蛋", "香蕉"], ["酸奶", "燕麦片", "香蕉"]]
-lunch_options = [["鸡胸肉", "西兰花", "糙米"], ["牛肉", "红薯", "西兰花"], ["三文鱼", "菠菜", "藜麦"]]
-dinner_options = [["鸡胸肉", "芦笋", "糙米"], ["三文鱼", "玉米", "红薯"], ["火鸡胸肉", "四季豆", "全麦面包"]]
-snack_options = [["坚果", "香蕉"], ["酸奶", "水果"], ["蛋白棒"]]
+# 性别菜单选择
+if gender=="男":
+    breakfast_options = [["燕麦片","牛奶","鸡蛋"],["全麦面包","鸡蛋","香蕉"],["酸奶","燕麦片","香蕉"]]
+    lunch_options = [["鸡胸肉","西兰花","糙米"],["牛肉","红薯","西兰花"],["三文鱼","菠菜","糙米"]]
+    dinner_options = [["鸡胸肉","芦笋","糙米"],["三文鱼","玉米","红薯"],["火鸡胸肉","四季豆","全麦面包"]]
+    snack_options = [["坚果","香蕉"],["酸奶","水果"],["蛋白棒"]]
+else:
+    breakfast_options = [["燕麦片","酸奶","香蕉"],["全麦面包","鸡蛋","水果"],["酸奶","燕麦片","水果"]]
+    lunch_options = [["鸡胸肉","菠菜","糙米"],["豆腐","红薯","西兰花"],["三文鱼","菠菜","糙米"]]
+    dinner_options = [["鸡胸肉","芦笋","红薯"],["三文鱼","玉米","红薯"],["豆腐","四季豆","全麦面包"]]
+    snack_options = [["坚果","水果"],["酸奶","水果"],["蛋白棒"]]
 
-# 生成一周菜单并按比例分配克数
-week_meals = []
-st.subheader("📅 一周饮食计划")
-for day in range(1, 8):
-    breakfast = random.choice(breakfast_options)
-    lunch = random.choice(lunch_options)
-    snack = random.choice(snack_options)
-    dinner = random.choice(dinner_options)
-    day_meals = [breakfast, lunch, snack, dinner]
-    week_meals.append(day_meals)
+if st.button("生成一周饮食计划"):
+    week_meals=[]
+    for day in range(1,8):
+        breakfast = random.choice(breakfast_options)
+        lunch = random.choice(lunch_options)
+        snack = random.choice(snack_options)
+        dinner = random.choice(dinner_options)
+        week_meals.append([breakfast,lunch,snack,dinner])
 
-    st.markdown(f"### 第 {day} 天")
-    for meal_name, meal in zip(["早餐", "午餐", "加餐", "晚餐"], day_meals):
-        # 简单分配，每餐热量按比例
-        total_calories = calories_per_day / 4
-        meal_display = []
-        for food in meal:
-            # 克数 = 目标热量 / 食物每100g热量 * 100
-            g = max(10, int(total_calories / len(meal) / food_db.get(food, {"cal":50})["cal"] * 100))
-            meal_display.append(f"{food} {g}g")
-        st.write(f"**{meal_name}**：{', '.join(meal_display)}")
-    st.write("---")
+    st.subheader("📅 一周饮食计划")
+    for day, meals in enumerate(week_meals,1):
+        with st.expander(f"第 {day} 天"):
+            for meal_name, meal in zip(["早餐","午餐","加餐","晚餐"], meals):
+                total_cal=total_protein=total_carb=total_fat=0
+                meal_text=[]
+                for food in meal:
+                    g = 100  # 默认克数
+                    if food in food_db:
+                        f = food_db[food]
+                        cal = f["cal"]*g/100
+                        protein = f["protein"]*g/100
+                        carb = f["carb"]*g/100
+                        fat = f["fat"]*g/100
+                        total_cal += cal
+                        total_protein += protein
+                        total_carb += carb
+                        total_fat += fat
+                        meal_text.append(f"{food} {g}g")
+                st.markdown(f"**{meal_name}**: {', '.join(meal_text)} | 热量: {int(total_cal)} kcal, 蛋白质: {int(total_protein)} g, 碳水: {int(total_carb)} g, 脂肪: {int(total_fat)} g")
 
-# 生成一周购物清单（累加每餐克数）
-shopping_list = {}
-for day_meals in week_meals:
-    for meal in day_meals:
-        total_calories = calories_per_day / 4
-        for food in meal:
-            g = max(10, int(total_calories / len(meal) / food_db.get(food, {"cal":50})["cal"] * 100))
-            if food in shopping_list:
-                shopping_list[food] += g
-            else:
-                shopping_list[food] = g
+    # 购物清单
+    shopping_list={}
+    for meals in week_meals:
+        for meal in meals:
+            for food in meal:
+                shopping_list[food]=shopping_list.get(food,0)+100
 
-st.subheader("🛒 一周购物清单（总量）")
-for food, total in shopping_list.items():
-    st.write(f"- {food}: {total*7//len(week_meals)} g")
+    st.subheader("🛒 一周购物清单")
+    for food, qty in shopping_list.items():
+        st.markdown(f"- {food}: {qty*7//len(week_meals)} g")

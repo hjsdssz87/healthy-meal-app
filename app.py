@@ -1,3 +1,4 @@
+# app_weekly_adjusted.py — 每日热量蛋白质微调版
 import streamlit as st
 import random
 import pandas as pd
